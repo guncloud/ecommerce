@@ -16,5 +16,6 @@ Route::get('/', function () {
 });
 
 Auth::routes();
+Route::get('/user/activation/{token}', 'Auth\RegisterController@activation');
 
 Route::get('/home', 'HomeController@index');

@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\User;
-use Validator;
 use App\Http\Controllers\Controller;
+use App\Mail\UserActivation;
+use App\User;
+use DB;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
+use Mail;
+use Validator;
 
 class RegisterController extends Controller
 {
@@ -68,4 +72,59 @@ class RegisterController extends Controller
             'password' => bcrypt($data['password']),
         ]);
     }
+
+    public function register(Request $request)
+    {
+        $validator = $this->validator($request->all());
+        if($validator->passes())
+        {
+            $user = $this->create($request->all());
+            $token = str_random(30);
+
+            DB::table('activation_user')->insert(array(
+                    'user_id' => $user->id,
+                    'token' => $token,
+                    'sent' => date('Y-m-d')
+                ));
+
+            $mail = new UserActivation($token);
+            Mail::to($user->email)->send($mail);
+
+            return redirect()->to('login')
+                ->with('success', 'Activation link sent');
+
+        }
+
+        return redirect()->back()->with('errors', $validator->errors());
+    }
+
+    public function activation($token)
+    {
+        $activation = DB::table('activation_user')
+            ->where('token', $token)
+            ->first();
+
+        if(!is_null($activation))
+        {
+            $user = User::find($activation->user_id);
+
+            if($user->activated == 1){
+                return redirect()->to('login')
+                    ->with('success', 'Your account is already activated');
+            }
+
+            DB::table('activation_user')->where('token', $token)->delete();
+            
+            $user->activated = 1;
+            $user->save();
+
+            return redirect()->to('login')
+                ->with('success', 'Your account succesfully activated');
+
+        }
+
+        return redirect()->to('login')
+            ->with('errors', 'Your token is invalid');
+    }
+
 }
