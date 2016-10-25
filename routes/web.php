@@ -12,10 +12,12 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('home');
 });
 
 Auth::routes();
 Route::get('/user/activation/{token}', 'Auth\RegisterController@activation');
+Route::get('/get_user_logged', 'Auth\LoginController@getUserLogged');
 
 Route::get('/home', 'HomeController@index');
+// Route::resource('/user','UserController');

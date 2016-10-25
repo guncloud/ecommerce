@@ -91,7 +91,7 @@ class RegisterController extends Controller
             Mail::to($user->email)->send($mail);
 
             return redirect()->to('login')
-                ->with('success', 'Activation link sent');
+                ->with('success', 'Activation link sent to your email');
 
         }
 
